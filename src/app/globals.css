@@ -1,0 +1,349 @@
+@import "tailwindcss";
+
+/* =========================
+   Design tokens (DÉGG)
+========================= */
+:root {
+  --degg-bg: #f7fafc;
+  --degg-ink: #0b1220;
+
+  --degg-green: #0fa958;
+  --degg-green-2: #0c8a48;
+
+  --degg-orange: #ff7a1a;
+  --degg-orange-2: #e86910;
+
+  --degg-yellow: #ffd34d;
+
+  --radius-xl: 18px;
+  --shadow-soft: 0 10px 30px rgba(11, 18, 32, 0.08);
+
+  color-scheme: light;
+}
+
+/* Base */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--degg-bg);
+  color: var(--degg-ink);
+
+  /* Important: utilise les polices next/font (définies dans layout.tsx) */
+  font-family: var(--font-inter), system-ui, -apple-system, Segoe UI, Roboto,
+    Arial, sans-serif;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Titres: Sora */
+h1,
+h2,
+h3 {
+  font-family: var(--font-sora), var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Sélection */
+::selection {
+  background: rgba(255, 122, 26, 0.28);
+}
+
+/* Scrollbar (desktop) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(11, 18, 32, 0.12);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 18, 32, 0.2);
+}
+
+/* =========================
+   Animations premium
+========================= */
+@keyframes degg-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.degg-fade-up {
+  animation: degg-fade-up 220ms ease-out both;
+}
+
+/* Shimmer loader (si on l’utilise dans l’UI) */
+@keyframes degg-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.degg-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 800px 100%;
+  animation: degg-shimmer 1.1s ease-in-out infinite;
+}
+
+/* Accessible focus */
+:focus-visible {
+  outline: 2px solid rgba(15, 169, 88, 0.55);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* Inputs nicer */
+textarea,
+select,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* =========================
+   JOJ / Sporty layer (piste + énergie)
+========================= */
+
+/* Surcouche tokens (réutilise tes couleurs) */
+:root {
+  --joj-green: var(--degg-green);
+  --joj-orange: var(--degg-orange);
+  --joj-yellow: var(--degg-yellow);
+  --joj-ink: var(--degg-ink);
+  --joj-bg: var(--degg-bg);
+
+  --joj-card: rgba(255, 255, 255, 0.92);
+  --joj-border: rgba(11, 18, 32, 0.08);
+  --joj-shadow: 0 18px 45px rgba(11, 18, 32, 0.14);
+}
+
+/* Fond principal: dégradés dynamiques + ambiance piste */
+.joj-track-bg {
+  background: radial-gradient(1200px 520px at 18% 0%, rgba(255, 211, 77, 0.26), transparent 60%),
+    radial-gradient(980px 520px at 82% 10%, rgba(255, 122, 26, 0.22), transparent 62%),
+    radial-gradient(980px 700px at 45% 100%, rgba(15, 169, 88, 0.20), transparent 62%),
+    linear-gradient(180deg, #f0fdf4 0%, #ffffff 55%, #fff7ed 100%);
+}
+
+/* Lignes/arches façon piste d’athlé (en overlay) */
+.joj-track-lines {
+  position: relative;
+}
+
+.joj-track-lines::before {
+  content: "";
+  position: absolute;
+  inset: -60px -20px auto -20px;
+  height: 320px;
+  pointer-events: none;
+  opacity: 0.70;
+  background: radial-gradient(closest-side, transparent 70%, rgba(15, 169, 88, 0.12) 71% 73%, transparent 74%) 0 0/140px 140px,
+    radial-gradient(closest-side, transparent 70%, rgba(255, 122, 26, 0.10) 71% 73%, transparent 74%) 50px 25px/160px 160px;
+  filter: blur(0.25px);
+}
+
+/* Petit grain premium (léger) */
+.joj-track-lines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: radial-gradient(rgba(11, 18, 32, 0.14) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 55%);
+}
+
+/* Badges sportifs */
+.joj-badge {
+  border: 1px solid rgba(11, 18, 32, 0.06);
+  box-shadow: 0 10px 25px rgba(11, 18, 32, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+/* Accent glow (utilisable en classe si tu veux) */
+.joj-glow {
+  box-shadow: 0 18px 35px rgba(15, 169, 88, 0.18), 0 14px 30px rgba(255, 122, 26, 0.12);
+}
+
+/* =========================
+   Guide Coach (Overlay + portrait)
+========================= */
+
+.joj-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(2, 6, 23, 0.60);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 14px;
+}
+
+.joj-coach {
+  width: min(860px, 100%);
+  border-radius: calc(var(--radius-xl) + 6px);
+  background: var(--joj-card);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.30);
+  overflow: hidden;
+}
+
+.joj-coach-top {
+  padding: 14px 14px 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: radial-gradient(520px 160px at 10% 0%, rgba(255, 211, 77, 0.45), transparent 58%),
+    radial-gradient(520px 160px at 90% 0%, rgba(255, 122, 26, 0.30), transparent 60%),
+    linear-gradient(135deg, rgba(15, 169, 88, 0.10), rgba(255, 122, 26, 0.08));
+  border-bottom: 1px solid rgba(11, 18, 32, 0.08);
+}
+
+.joj-coach-body {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 14px;
+}
+
+.joj-portrait {
+  width: 110px;
+  height: 110px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 2px solid rgba(15, 169, 88, 0.22);
+  box-shadow: 0 16px 30px rgba(11, 18, 32, 0.14);
+  background: white;
+}
+
+.joj-bubble {
+  border-radius: 18px;
+  border: 1px solid rgba(11, 18, 32, 0.08);
+  background: white;
+  padding: 12px 12px;
+  box-shadow: 0 12px 25px rgba(11, 18, 32, 0.06);
+  position: relative;
+}
+
+.joj-bubble::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-left: 1px solid rgba(11, 18, 32, 0.08);
+  border-bottom: 1px solid rgba(11, 18, 32, 0.08);
+  transform: rotate(45deg);
+}
+
+.joj-coach-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 0 14px 14px 14px;
+}
+
+.joj-btn {
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight: 900;
+  font-size: 13px;
+  border: 1px solid rgba(11, 18, 32, 0.10);
+  background: white;
+  color: rgba(11, 18, 32, 0.88);
+  box-shadow: 0 10px 22px rgba(11, 18, 32, 0.06);
+}
+
+.joj-btn:active {
+  transform: translateY(1px);
+}
+
+.joj-btn-ghost {
+  background: rgba(11, 18, 32, 0.04);
+  border-color: rgba(11, 18, 32, 0.06);
+  box-shadow: none;
+}
+
+.joj-btn-primary {
+  border: none;
+  color: white;
+  background: linear-gradient(135deg, var(--joj-green), var(--joj-orange));
+  box-shadow: 0 16px 35px rgba(15, 169, 88, 0.22), 0 14px 32px rgba(255, 122, 26, 0.16);
+}
+
+/* =========================
+   Floating Action Button "Guide"
+========================= */
+.joj-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  border-radius: 999px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  color: white;
+  font-weight: 950;
+  letter-spacing: 0.2px;
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, var(--joj-green), var(--joj-orange));
+  box-shadow: 0 18px 40px rgba(15, 169, 88, 0.22), 0 14px 32px rgba(255, 122, 26, 0.18);
+}
+
+.joj-fab:hover {
+  filter: saturate(1.05);
+}
+
+.joj-fab:active {
+  transform: translateY(1px);
+}
+
+/* =========================
+   Responsive (mobile)
+========================= */
+@media (max-width: 520px) {
+  .joj-coach-body {
+    grid-template-columns: 76px 1fr;
+  }
+
+  .joj-portrait {
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
+  }
+
+  .joj-bubble::before {
+    left: -5px;
+    top: 18px;
+    width: 10px;
+    height: 10px;
+  }
+}

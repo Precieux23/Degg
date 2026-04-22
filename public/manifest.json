@@ -1,0 +1,16 @@
+{
+  "name": "DÉGG - JOJ Dakar 2026",
+  "short_name": "DÉGG",
+  "description": "Traduction instantanée pour les JOJ Dakar 2026",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
