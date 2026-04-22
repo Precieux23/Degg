@@ -113,11 +113,11 @@ export default function Home() {
   };
 
   const startListening = (targetLang: string, onResult: (text: string) => void) => {
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition;
+    const SpeechRecognitionAPI =
+  window.SpeechRecognition ||
+  (window as unknown as { webkitSpeechRecognition: typeof window.SpeechRecognition }).webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
+    if (!SpeechRecognitionAPI) {
       alert("Reconnaissance vocale non supportée sur ce navigateur. Utilisez Chrome.");
       return;
     }
@@ -139,7 +139,7 @@ export default function Home() {
       HI: "hi-IN",
     };
 
-    const recognition = new SpeechRecognition();
+    const recognition = new SpeechRecognitionAPI();
     recognition.lang = langMap[targetLang] || "fr-FR";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
