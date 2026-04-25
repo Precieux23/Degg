@@ -121,6 +121,15 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Torch flame animation (landing screen) */
+@keyframes joj-flame {
+  0%   { transform: scaleX(1)    scaleY(1)    rotate(-3deg); opacity: 0.85; }
+  25%  { transform: scaleX(1.1)  scaleY(0.92) rotate(4deg);  opacity: 1;    }
+  50%  { transform: scaleX(0.92) scaleY(1.08) rotate(-2deg); opacity: 0.9;  }
+  75%  { transform: scaleX(1.06) scaleY(0.96) rotate(3deg);  opacity: 0.95; }
+  100% { transform: scaleX(1)    scaleY(1)    rotate(-3deg); opacity: 0.85; }
+}
+
 /* =========================
    JOJ / Sporty layer (piste + énergie)
 ========================= */

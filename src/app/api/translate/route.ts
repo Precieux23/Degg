@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { text, from, to } = await req.json();
+  const body = await req.json();
+  const { text, texts, from, to } = body;
 
-  if (!text || !from || !to) {
+  if (!from || !to) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  if (from === to) {
-    return NextResponse.json({ translation: text });
+  // Accept single string OR array of strings
+  const textArray: string[] = Array.isArray(texts)
+    ? texts
+    : typeof text === "string" && text
+    ? [text]
+    : [];
+
+  if (textArray.length === 0) {
+    return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
+  }
+
+  // Same language → return as-is
+  if (String(from).toUpperCase() === String(to).toUpperCase()) {
+    return NextResponse.json({
+      translation: textArray[0],
+      translations: textArray,
+    });
   }
 
   if (!process.env.DEEPL_API_KEY) {
@@ -26,7 +42,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        text: [text],
+        text: textArray,
         source_lang: String(from).toUpperCase(),
         target_lang: String(to).toUpperCase(),
       }),
@@ -35,16 +51,17 @@ export async function POST(req: NextRequest) {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const msg =
-        data?.message ||
-        data?.error ||
-        `Erreur DeepL (${response.status})`;
+      const msg = data?.message || data?.error || `Erreur DeepL (${response.status})`;
       return NextResponse.json({ error: msg }, { status: 502 });
     }
 
-    if (data?.translations?.[0]?.text) {
+    if (data?.translations?.length) {
+      const translationTexts: string[] = data.translations.map(
+        (t: { text: string }) => t.text
+      );
       return NextResponse.json({
-        translation: data.translations[0].text,
+        translation: translationTexts[0],
+        translations: translationTexts,
       });
     }
 

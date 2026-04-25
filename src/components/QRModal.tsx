@@ -30,7 +30,7 @@ export default function QRModal() {
             </div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">DÉGG</h2>
             <p className="text-xs text-gray-400 mb-6">
-              Scannez pour accéder à l'app
+              Scannez pour accéder à l&apos;app
             </p>
             <div className="flex justify-center mb-6">
               <div className="p-4 bg-gray-50 rounded-2xl">

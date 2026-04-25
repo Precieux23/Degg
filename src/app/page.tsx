@@ -1,20 +1,30 @@
 "use client";
 
 import QRModal from "@/components/QRModal";
-import MobiliteJOJ from "@/components/MobiliteJOJ";
-import GuideCoach, { GuideKey, GuideLocale } from "@/components/GuideCoach";
+import MapJOJ from "@/components/MapJOJ";
+import GuideCoach, { GuideKey } from "@/components/GuideCoach";
+import LandingScreen from "@/components/LandingScreen";
+import ChatbotAssistant from "@/components/ChatbotAssistant";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { LANGUAGES, JOJ_PHRASES } from "@/lib/languages";
+import type { JOJPhraseCategory } from "@/lib/languages";
+import type { ChatMessage } from "@/lib/chatbot";
+import { FR_UI, getUIStrings } from "@/lib/ui-strings";
+import type { UIStrings } from "@/lib/ui-strings";
+import { translateBatch } from "@/lib/translate";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
+  // userLang = langue choisie au démarrage (pilote l'UI, le guide, le chatbot)
+  // fromLang / toLang = libre dans l'onglet Traduction, n'affecte PAS l'UI
+  const [userLang, setUserLang] = useState("FR");
   const [fromLang, setFromLang] = useState("FR");
   const [toLang, setToLang] = useState("WO");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [activeTab, setActiveTab] = useState<"translate" | "phrases" | "conversation" | "mobilite">("translate");
+  const [activeTab, setActiveTab] = useState<"translate" | "phrases" | "conversation" | "mobilite" | "chatbot">("translate");
   const [history, setHistory] = useState<{ input: string; output: string; from: string; to: string }[]>([]);
   const [convMessages, setConvMessages] = useState<{ text: string; lang: string; side: "A" | "B" }[]>([]);
   const [convInputA, setConvInputA] = useState("");
@@ -29,32 +39,71 @@ export default function Home() {
   const [guideStep, setGuideStep] = useState<GuideKey>("welcome");
   const [welcomeSeen, setWelcomeSeen] = useState(false);
 
-  const [guideLocale, setGuideLocale] = useState<GuideLocale>("fr");
+  // Persistent chat messages (survives tab switches)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
+  // JOJ phrases translated in user's language
+  const [translatedPhrases, setTranslatedPhrases] = useState<JOJPhraseCategory[]>(JOJ_PHRASES);
+
+  // UI strings (translated in user's language)
+  const [uiStrings, setUiStrings] = useState<UIStrings>(FR_UI);
+
+  // Landing screen state — session-based (shows on every new session)
+  const [showLanding, setShowLanding] = useState(false);
+  const [landingReady, setLandingReady] = useState(false);
 
   useEffect(() => {
     try {
-      const savedLocale = localStorage.getItem("degg_guide_locale") as GuideLocale | null;
-      if (savedLocale === "fr" || savedLocale === "en") setGuideLocale(savedLocale);
+      const sessionStarted = sessionStorage.getItem("degg_session");
+      if (!sessionStarted) setShowLanding(true);
 
       const seen = sessionStorage.getItem("guide_seen_welcome") === "1";
       setWelcomeSeen(seen);
-
-      // Ouvre le guide UNIQUEMENT si la welcome n’a jamais été vue
-      if (!seen) {
+      if (sessionStarted && !seen) {
         setGuideStep("welcome");
         setIsGuideOpen(true);
       }
     } catch {
-      setGuideStep("welcome");
-      setIsGuideOpen(true);
+      // silently fail
+    } finally {
+      setLandingReady(true);
     }
   }, []);
 
+  // UI strings + phrases réagissent UNIQUEMENT à userLang (jamais à toLang)
   useEffect(() => {
+    getUIStrings(userLang).then(setUiStrings);
+  }, [userLang]);
+
+  useEffect(() => {
+    if (userLang === "FR") {
+      setTranslatedPhrases(JOJ_PHRASES);
+      return;
+    }
+    const allTexts = JOJ_PHRASES.flatMap((cat) => [cat.category, ...cat.phrases]);
+    translateBatch(allTexts, "FR", userLang).then((translated) => {
+      let i = 0;
+      setTranslatedPhrases(
+        JOJ_PHRASES.map((cat) => ({
+          category: translated[i++] || cat.category,
+          phrases: cat.phrases.map((p) => translated[i++] || p),
+        }))
+      );
+    });
+  }, [userLang]);
+
+  const handleLandingStart = (lang: string) => {
+    setUserLang(lang);
+    // La langue choisie devient la langue de départ de traduction
+    setFromLang(lang);
+    // Destination par défaut : français si l'utilisateur parle wolof, wolof sinon
+    setToLang(lang === "WO" ? "FR" : lang === "FR" ? "WO" : "FR");
     try {
-      localStorage.setItem("degg_guide_locale", guideLocale);
-    } catch {}
-  }, [guideLocale]);
+      sessionStorage.setItem("degg_session", "1");
+      sessionStorage.setItem("guide_seen_welcome", "1");
+    } catch { /* ignore */ }
+    setShowLanding(false);
+  };
 
   const getLangName = (code: string) =>
     LANGUAGES.find((l) => l.code === code)?.name || code;
@@ -211,13 +260,18 @@ export default function Home() {
       ? "phrases"
       : activeTab === "conversation"
       ? "conversation"
-      : activeTab === "mobilite"          // ← ajoute cette ligne
-      ? "mobilite"                         // ← et celle-ci
+      : activeTab === "mobilite"
+      ? "mobilite"
+      : activeTab === "chatbot"
+      ? "assistant"
       : "translate_language";
 
     setGuideStep(step);
     setIsGuideOpen(true);
   };
+
+  if (!landingReady) return null;
+  if (showLanding) return <LandingScreen onStart={handleLandingStart} />;
 
   return (
     <main className="min-h-screen joj-track-bg joj-track-lines">
@@ -234,27 +288,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Zone droite responsive */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Langue du guide */}
-            <select
-              value={guideLocale}
-              onChange={(e) => setGuideLocale(e.target.value as GuideLocale)}
-              className="text-xs bg-gray-50 border border-gray-200 rounded-xl px-2 py-1.5 font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-              aria-label="Langue du guide"
-              title="Langue du guide"
-            >
-              <option value="fr">FR</option>
-              <option value="en">EN</option>
-            </select>
-
-            {/* Badges cachés sur très petit écran */}
             <span className="hidden sm:inline-flex text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
-              🇸🇳 Wolof
+              {LANGUAGES.find(l => l.code === "WO")?.flag} Wolof
             </span>
-
             <QRModal />
-
             <span className="hidden sm:inline-flex text-xs bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-medium">
               13 langues
             </span>
@@ -264,26 +302,43 @@ export default function Home() {
 
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
         {/* Tabs */}
-        <div className="grid grid-cols-2 gap-1 bg-white rounded-2xl border border-gray-100 p-1 shadow-sm">
-  {[
-    { key: "translate", label: "🌐 Traduire" },
-    { key: "phrases", label: "⚡ Phrases JOJ" },
-    { key: "conversation", label: "💬 Conversation" },
-    { key: "mobilite", label: "🗺️ Mobilité" },
-  ].map((tab) => (
-    <button
-      key={tab.key}
-      onClick={() => setActiveTab(tab.key as typeof activeTab)}
-      className={`py-2.5 text-xs font-semibold rounded-xl transition-all ${
-        activeTab === tab.key
-          ? "bg-green-600 text-white shadow-sm"
-          : "text-gray-400 hover:text-gray-600"
-      }`}
-    >
-      {tab.label}
-    </button>
-  ))}
-</div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-1 shadow-sm space-y-1">
+          <div className="grid grid-cols-2 gap-1">
+            {[
+              { key: "translate", label: uiStrings.tabTranslate },
+              { key: "phrases", label: uiStrings.tabPhrases },
+              { key: "conversation", label: uiStrings.tabConversation },
+              { key: "mobilite", label: uiStrings.tabMap },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                className={`py-2.5 text-xs font-semibold rounded-xl transition-all ${
+                  activeTab === tab.key
+                    ? "bg-green-600 text-white shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setActiveTab("chatbot")}
+            className={`w-full py-2.5 text-xs font-semibold rounded-xl transition-all ${
+              activeTab === "chatbot"
+                ? "text-white shadow-sm"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+            style={
+              activeTab === "chatbot"
+                ? { background: "linear-gradient(135deg, #0fa958, #ff7a1a)" }
+                : {}
+            }
+          >
+            {uiStrings.tabAssistant}
+          </button>
+        </div>
 
         {/* TAB: Traduire */}
         {activeTab === "translate" && (
@@ -340,29 +395,23 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-gray-50">
-                <span className="text-xs text-gray-300">{inputText.length} caractères</span>
+                <span className="text-xs text-gray-300">{inputText.length} {uiStrings.charsLabel}</span>
                 <div className="flex gap-2">
                   {inputText && (
                     <button
-                      onClick={() => {
-                        setInputText("");
-                        setTranslatedText("");
-                      }}
+                      onClick={() => { setInputText(""); setTranslatedText(""); }}
                       className="px-3 py-1.5 rounded-xl text-xs font-medium bg-gray-100 text-gray-500 hover:bg-gray-200 transition-all"
                     >
-                      ✕ Effacer
+                      {uiStrings.clearBtn}
                     </button>
                   )}
-
                   <button
                     onClick={() => startListening(fromLang, (text) => setInputText(text))}
                     className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      isListening
-                        ? "bg-red-500 text-white animate-pulse"
-                        : "bg-green-600 text-white hover:bg-green-700"
+                      isListening ? "bg-red-500 text-white animate-pulse" : "bg-green-600 text-white hover:bg-green-700"
                     }`}
                   >
-                    🎤 {isListening ? "Écoute..." : "Parler"}
+                    {isListening ? uiStrings.listeningBtn : uiStrings.speakBtn}
                   </button>
                 </div>
               </div>
@@ -379,12 +428,12 @@ export default function Home() {
                       <div className="w-2 h-2 bg-green-200 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
                       <div className="w-2 h-2 bg-green-200 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
-                    <span className="text-sm">Traduction...</span>
+                    <span className="text-sm">{uiStrings.translatingLabel}</span>
                   </div>
                 ) : (
                   <p className="flex-1 text-white text-base leading-relaxed min-h-[4rem]">
                     {translatedText || (
-                      <span className="text-green-300 text-sm">La traduction apparaîtra ici...</span>
+                      <span className="text-green-300 text-sm">{uiStrings.outputPlaceholder}</span>
                     )}
                   </p>
                 )}
@@ -403,7 +452,7 @@ export default function Home() {
                         : "bg-green-500 text-white hover:bg-green-400"
                     }`}
                   >
-                    🔊 {isSpeaking ? "Lecture..." : "Écouter"}
+                    {isSpeaking ? uiStrings.playingBtn : uiStrings.listenBtn}
                   </button>
                 </div>
               )}
@@ -413,7 +462,7 @@ export default function Home() {
             {history.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
                 <h3 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wide">
-                  🕐 Récent
+                  {uiStrings.historyTitle}
                 </h3>
                 <div className="space-y-2">
                   {history.slice(0, 3).map((item, i) => (
@@ -440,7 +489,7 @@ export default function Home() {
         {activeTab === "phrases" && (
           <div className="space-y-3">
             <div className="bg-green-600 rounded-2xl p-4 text-center">
-              <p className="text-white font-semibold text-sm">Phrases essentielles JOJ</p>
+              <p className="text-white font-semibold text-sm">{uiStrings.phrasesTitle}</p>
               <p className="text-green-200 text-xs mt-1">
                 Tap → traduction instantanée vers {getLangFlag(toLang)} {getLangName(toLang)}
               </p>
@@ -448,7 +497,7 @@ export default function Home() {
 
             <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 font-medium">Traduire vers :</span>
+                <span className="text-xs text-gray-500 font-medium">{uiStrings.translationToLabel} :</span>
                 <select
                   value={toLang}
                   onChange={(e) => setToLang(e.target.value)}
@@ -463,7 +512,7 @@ export default function Home() {
               </div>
             </div>
 
-            {JOJ_PHRASES.map((cat) => (
+            {translatedPhrases.map((cat) => (
               <div key={cat.category} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
                 <h3 className="font-semibold text-gray-700 mb-3 text-sm">{cat.category}</h3>
                 <div className="space-y-2">
@@ -472,9 +521,9 @@ export default function Home() {
                       key={phrase}
                       onClick={() => {
                         setInputText(phrase);
-                        setFromLang("FR");
+                        setFromLang(userLang);
                         setActiveTab("translate");
-                        translate(phrase, "FR", toLang);
+                        translate(phrase, userLang, toLang);
                       }}
                       className="w-full text-left px-4 py-3 rounded-xl bg-gray-50 hover:bg-green-50 hover:text-green-700 text-sm text-gray-700 transition-all border border-transparent hover:border-green-200 font-medium"
                     >
@@ -554,7 +603,7 @@ export default function Home() {
 
             <div className="bg-green-50 rounded-2xl border border-green-100 p-4">
               <p className="text-xs font-semibold text-green-700 mb-2">
-                Personne A · {getLangFlag(fromLang)} {getLangName(fromLang)}
+                {uiStrings.personA} · {getLangFlag(fromLang)} {getLangName(fromLang)}
               </p>
               <textarea
                 value={convInputA}
@@ -569,20 +618,20 @@ export default function Home() {
                     isListening ? "bg-red-500 text-white animate-pulse" : "bg-green-600 text-white hover:bg-green-700"
                   }`}
                 >
-                  🎤 {isListening ? "Écoute..." : "Micro"}
+                  {isListening ? uiStrings.listeningMic : uiStrings.micBtn}
                 </button>
                 <button
                   onClick={() => sendConvMessage("A")}
                   className="flex-1 py-1.5 rounded-xl text-xs font-semibold bg-green-600 text-white hover:bg-green-700 transition-all"
                 >
-                  Envoyer → {getLangFlag(toLang)}
+                  {uiStrings.sendBtn} → {getLangFlag(toLang)}
                 </button>
               </div>
             </div>
 
             <div className="bg-orange-50 rounded-2xl border border-orange-100 p-4">
               <p className="text-xs font-semibold text-orange-700 mb-2">
-                Personne B · {getLangFlag(toLang)} {getLangName(toLang)}
+                {uiStrings.personB} · {getLangFlag(toLang)} {getLangName(toLang)}
               </p>
               <textarea
                 value={convInputB}
@@ -597,13 +646,13 @@ export default function Home() {
                     isListening ? "bg-red-500 text-white animate-pulse" : "bg-orange-500 text-white hover:bg-orange-600"
                   }`}
                 >
-                  🎤 {isListening ? "Écoute..." : "Micro"}
+                  {isListening ? uiStrings.listeningMic : uiStrings.micBtn}
                 </button>
                 <button
                   onClick={() => sendConvMessage("B")}
                   className="flex-1 py-1.5 rounded-xl text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-all"
                 >
-                  Envoyer → {getLangFlag(fromLang)}
+                  {uiStrings.sendBtn} → {getLangFlag(fromLang)}
                 </button>
               </div>
             </div>
@@ -613,36 +662,60 @@ export default function Home() {
                 onClick={() => setConvMessages([])}
                 className="w-full py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all border border-gray-100"
               >
-                🗑️ Effacer la conversation
+                {uiStrings.clearConvBtn}
               </button>
             )}
           </div>
         )}
       </div>
-      {/* TAB: Mobilité */}
-{activeTab === "mobilite" && (
-  <MobiliteJOJ
-    toLang={toLang}
-    getLangName={getLangName}
-    getLangFlag={getLangFlag}
-    onTranslate={translate}
-    onPhraseSelect={(phrase) => {
-      setInputText(phrase);
-      setFromLang("FR");
-      setActiveTab("translate");
-      translate(phrase, "FR", toLang);
-    }}
-  />
-)}
+      {/* TAB: Carte JOJ — contenu traduit dans la langue de l'utilisateur */}
+      {activeTab === "mobilite" && (
+        <MapJOJ
+          toLang={userLang}
+          getLangName={getLangName}
+          getLangFlag={getLangFlag}
+          sportsTitle={uiStrings.mapSportsTitle}
+          transportTitle={uiStrings.mapTransportTitle}
+          phrasesTitle={uiStrings.mapPhrasesTitle}
+          openMapsBtn={uiStrings.openMapsBtn}
+          yangoBtn={uiStrings.yangoBtn}
+          backLabel={uiStrings.mapBackLabel}
+          onPhraseSelect={(phrase) => {
+            setInputText(phrase);
+            setFromLang(userLang);
+            setActiveTab("translate");
+            translate(phrase, userLang, toLang);
+          }}
+        />
+      )}
+
+      {/* TAB: Assistant JOJ */}
+      {activeTab === "chatbot" && (
+        <div className="max-w-2xl mx-auto px-4 pb-5">
+          <ChatbotAssistant
+            defaultLang={userLang}
+            messages={chatMessages}
+            setMessages={setChatMessages}
+          />
+        </div>
+      )}
 
       <footer className="text-center py-8 text-xs text-gray-300">
         DÉGG · JOJ Dakar 2026 · <span className="text-green-400">Dafa dégg</span> 🇸🇳
       </footer>
 
-      {/* Bouton flottant Guide (toujours dispo) */}
+      {/* Bouton flottant Assistant JOJ */}
+      <button
+        className="joj-fab"
+        style={{ bottom: 88 }}
+        onClick={() => setActiveTab("chatbot")}
+      >
+        <span style={{ fontSize: 13 }}>{uiStrings.fabAssistant}</span>
+      </button>
+
+      {/* Bouton flottant Guide d'utilisation */}
       <button className="joj-fab" onClick={openGuideForCurrentScreen}>
-        <span style={{ fontSize: 16 }}>🧭</span>
-        <span style={{ fontSize: 13 }}>Guide</span>
+        <span style={{ fontSize: 13 }}>{uiStrings.fabGuide}</span>
       </button>
 
       {/* Overlay Guide */}
@@ -654,17 +727,12 @@ export default function Home() {
         isLoading={isLoading}
         hasInput={!!inputText.trim()}
         hasOutput={!!translatedText.trim()}
-        locale={guideLocale}
-        onLocaleChange={(loc) => setGuideLocale(loc)}
+        locale={userLang}
         onClose={() => {
           setIsGuideOpen(false);
-
-          // Marquer la welcome comme vue à la première fermeture
           if (!welcomeSeen) {
             setWelcomeSeen(true);
-            try {
-              sessionStorage.setItem("guide_seen_welcome", "1");
-            } catch {}
+            try { sessionStorage.setItem("guide_seen_welcome", "1"); } catch {}
           }
         }}
       />
