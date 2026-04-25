@@ -11,8 +11,7 @@ export type GuideKey =
   | "translate_voice"
   | "translate_output"
   | "phrases"
-  | "conversation"
-  | "mobilite";
+  | "conversation";
 
 export type GuideLocale = "fr" | "en";
 
@@ -20,7 +19,7 @@ type Props = {
   open: boolean;
   onClose: () => void;
 
-  activeTab: "translate" | "phrases" | "conversation" | "mobilite";
+  activeTab: "translate" | "phrases" | "conversation";
   isListening: boolean;
   isLoading: boolean;
   hasInput: boolean;
@@ -28,6 +27,7 @@ type Props = {
 
   initialStep?: GuideKey;
 
+  /* Langue contrôlée par l'app (header) */
   locale: GuideLocale;
   onLocaleChange: (locale: GuideLocale) => void;
 };
@@ -41,46 +41,44 @@ const ORDER: GuideKey[] = [
   "translate_output",
   "phrases",
   "conversation",
-  "mobilite",
 ];
 
 function stepFromTab(tab: Props["activeTab"]): GuideKey {
   if (tab === "phrases") return "phrases";
   if (tab === "conversation") return "conversation";
-  if (tab === "mobilite") return "mobilite";
   return "translate_language";
 }
 
-type I18NEntry = {
-  ui: {
-    guide: string;
-    close: string;
-    prev: string;
-    next: string;
-    understood: string;
-    restart: string;
-    goToMyScreen: string;
-    step: (i: number, n: number) => string;
-    language: string;
-    modeLine: (mode: string) => string;
-    micOn: string;
-    loading: string;
-  };
-  steps: Record<GuideKey, { title: string; body: string }>;
-  hints: {
-    hasInput: string;
-    listening: string;
-    outputReady: string;
-  };
-  modes: {
-    translate: string;
-    phrases: string;
-    conversation: string;
-    mobilite: string;
-  };
-};
-
-const I18N: Record<GuideLocale, I18NEntry> = {
+const I18N: Record<
+  GuideLocale,
+  {
+    ui: {
+      guide: string;
+      close: string;
+      prev: string;
+      next: string;
+      understood: string;
+      restart: string;
+      goToMyScreen: string;
+      step: (i: number, n: number) => string;
+      language: string;
+      modeLine: (mode: string) => string;
+      micOn: string;
+      loading: string;
+    };
+    steps: Record<GuideKey, { title: string; body: string }>;
+    hints: {
+      hasInput: string;
+      listening: string;
+      outputReady: string;
+    };
+    modes: {
+      translate: string;
+      phrases: string;
+      conversation: string;
+    };
+  }
+> = {
   fr: {
     ui: {
       guide: "GUIDE",
@@ -100,49 +98,52 @@ const I18N: Record<GuideLocale, I18NEntry> = {
       translate: "🌐 Traduire",
       phrases: "⚡ Phrases JOJ",
       conversation: "💬 Conversation",
-      mobilite: "🗺️ Mobilité",
     },
     steps: {
       welcome: {
         title: "Bienvenue sur DÉGG",
-        body: "Je suis ton guide.\n\nIci tu peux traduire en direct, utiliser les phrases JOJ, discuter en mode conversation A/B, ou consulter la carte de mobilité des JOJ.\n\nTu peux me rappeler à tout moment avec le bouton Guide en bas à droite.",
+        body:
+          "Je suis ton guide.\n\nIci tu peux traduire en direct, utiliser les phrases JOJ, ou discuter en mode conversation A/B.\n\nTu peux me rappeler à tout moment avec le bouton Guide en bas à droite.",
       },
       tabs: {
         title: "Choisis ton mode",
-        body: "🌐 Traduire: texte ou micro.\n⚡ Phrases JOJ: phrases prêtes à l'emploi.\n💬 Conversation: échange A/B, traduction + lecture auto.\n🗺️ Mobilité: carte des sites JOJ + transports traduits.",
+        body:
+          "🌐 Traduire: texte ou micro.\n⚡ Phrases JOJ: phrases prêtes à l’emploi.\n💬 Conversation: échange A/B, traduction + lecture auto.",
       },
       translate_language: {
         title: "Langues",
-        body: "Choisis la langue de départ à gauche et la langue cible à droite.\n\nLe bouton ⇄ inverse les langues instantanément.",
+        body:
+          "Choisis la langue de départ à gauche et la langue cible à droite.\n\nLe bouton ⇄ inverse les langues instantanément.",
       },
       translate_input: {
         title: "Saisie rapide",
-        body: "Tape ton message. La traduction se lance automatiquement après une courte pause.\n\nAstuce: fais des phrases courtes pour une traduction plus fluide.",
+        body:
+          "Tape ton message. La traduction se lance automatiquement après une courte pause.\n\nAstuce: fais des phrases courtes pour une traduction plus fluide.",
       },
       translate_voice: {
         title: "Micro",
-        body: "Appuie sur 🎤 Parler, puis parle.\n\nLe texte se remplit automatiquement si ton navigateur supporte la reconnaissance vocale.",
+        body:
+          "Appuie sur 🎤 Parler, puis parle.\n\nLe texte se remplit automatiquement si ton navigateur supporte la reconnaissance vocale.",
       },
       translate_output: {
         title: "Résultat + audio",
-        body: "La traduction s'affiche ici.\n\nTu peux appuyer sur 🔊 Écouter pour la faire lire à voix haute.",
+        body:
+          "La traduction s’affiche ici.\n\nTu peux appuyer sur 🔊 Écouter pour la faire lire à voix haute.",
       },
       phrases: {
         title: "Phrases JOJ",
-        body: "Choisis ta langue cible, puis tape sur une phrase.\n\nElle s'envoie dans Traduire et la traduction arrive instantanément.",
+        body:
+          "Choisis ta langue cible, puis tape sur une phrase.\n\nElle s’envoie dans Traduire et la traduction arrive instantanément.",
       },
       conversation: {
         title: "Conversation A/B",
-        body: "Deux personnes parlent chacune dans sa langue.\n\nAprès envoi, la traduction s'affiche de l'autre côté et peut être lue à voix haute.",
-      },
-      mobilite: {
-        title: "Mobilité JOJ",
-        body: "🗺️ Explore les 3 zones des JOJ : Dakar, Diamniadio et Saly.\n\n1. Sélectionne une zone\n2. Choisis un site de compétition\n3. Vois les transports disponibles (TER, BRT, DDD, navettes CSS)\n\nTout est traduit dans ta langue en temps réel.\n\nAstuce: utilise les phrases transport en bas pour communiquer facilement sur le terrain !",
+        body:
+          "Deux personnes parlent chacune dans sa langue.\n\nAprès envoi, la traduction s’affiche de l’autre côté et peut être lue à voix haute.",
       },
     },
     hints: {
       hasInput: "Je vois du texte, la traduction arrive bientôt.",
-      listening: "Je t'écoute. Parle maintenant.",
+      listening: "Je t’écoute. Parle maintenant.",
       outputReady: "Tu peux appuyer sur 🔊 pour la lecture.",
     },
   },
@@ -166,49 +167,52 @@ const I18N: Record<GuideLocale, I18NEntry> = {
       translate: "🌐 Translate",
       phrases: "⚡ JOJ Phrases",
       conversation: "💬 Conversation",
-      mobilite: "🗺️ Mobility",
     },
     steps: {
       welcome: {
         title: "Welcome to DÉGG",
-        body: "I'm your guide.\n\nHere you can translate instantly, use JOJ phrases, chat in A/B conversation mode, or check the JOJ mobility map.\n\nYou can open me anytime with the Guide button in the bottom right.",
+        body:
+          "I’m your guide.\n\nHere you can translate instantly, use JOJ phrases, or chat in A/B conversation mode.\n\nYou can open me anytime with the Guide button in the bottom right.",
       },
       tabs: {
         title: "Pick a mode",
-        body: "🌐 Translate: text or mic.\n⚡ JOJ Phrases: ready-made phrases.\n💬 Conversation: A/B chat, translation + auto voice.\n🗺️ Mobility: JOJ sites map + translated transport info.",
+        body:
+          "🌐 Translate: text or mic.\n⚡ JOJ Phrases: ready-made phrases.\n💬 Conversation: A/B chat, translation + auto voice.",
       },
       translate_language: {
         title: "Languages",
-        body: "Choose the source language on the left and the target language on the right.\n\nUse ⇄ to swap instantly.",
+        body:
+          "Choose the source language on the left and the target language on the right.\n\nUse ⇄ to swap instantly.",
       },
       translate_input: {
         title: "Quick input",
-        body: "Type your message. Translation starts automatically after a short pause.\n\nTip: keep sentences short for smoother translation.",
+        body:
+          "Type your message. Translation starts automatically after a short pause.\n\nTip: keep sentences short for smoother translation.",
       },
       translate_voice: {
         title: "Microphone",
-        body: "Tap 🎤 Speak, then talk.\n\nYour text will be filled automatically if your browser supports speech recognition.",
+        body:
+          "Tap 🎤 Speak, then talk.\n\nYour text will be filled automatically if your browser supports speech recognition.",
       },
       translate_output: {
         title: "Result + audio",
-        body: "Your translation appears here.\n\nTap 🔊 Listen to hear it out loud.",
+        body:
+          "Your translation appears here.\n\nTap 🔊 Listen to hear it out loud.",
       },
       phrases: {
         title: "JOJ Phrases",
-        body: "Pick a target language, then tap a phrase.\n\nIt jumps to Translate and returns instantly.",
+        body:
+          "Pick a target language, then tap a phrase.\n\nIt jumps to Translate and returns instantly.",
       },
       conversation: {
         title: "A/B Conversation",
-        body: "Two people speak in their own language.\n\nAfter sending, the translation shows on the other side and can be read aloud.",
-      },
-      mobilite: {
-        title: "JOJ Mobility",
-        body: "🗺️ Explore the 3 JOJ zones: Dakar, Diamniadio and Saly.\n\n1. Select a zone\n2. Choose a competition site\n3. See available transport (TER, BRT, DDD, CSS shuttles)\n\nEverything is translated into your language in real time.\n\nTip: use the transport phrases at the bottom to communicate easily on the ground!",
+        body:
+          "Two people speak in their own language.\n\nAfter sending, the translation shows on the other side and can be read aloud.",
       },
     },
     hints: {
       hasInput: "I see text, translation is coming.",
-      listening: "I'm listening. Speak now.",
+      listening: "I’m listening. Speak now.",
       outputReady: "You can tap 🔊 to listen.",
     },
   },
@@ -247,8 +251,6 @@ export default function GuideCoach(props: Props) {
       ? t.modes.translate
       : props.activeTab === "phrases"
       ? t.modes.phrases
-      : props.activeTab === "mobilite"
-      ? t.modes.mobilite
       : t.modes.conversation;
 
   const hint =
@@ -326,25 +328,6 @@ export default function GuideCoach(props: Props) {
           />
 
           <div className="joj-bubble">
-            {/* Illustration spéciale pour l'étape Mobilité */}
-            {stepKey === "mobilite" && (
-              <div className="flex gap-2 mb-3">
-                {[
-                  { icon: "🏙️", label: "Dakar", color: "bg-green-100 text-green-700 border-green-200" },
-                  { icon: "🏟️", label: "Diamniadio", color: "bg-blue-100 text-blue-700 border-blue-200" },
-                  { icon: "🏖️", label: "Saly", color: "bg-orange-100 text-orange-700 border-orange-200" },
-                ].map((z) => (
-                  <div
-                    key={z.label}
-                    className={`flex-1 text-center py-2 rounded-xl border text-xs font-bold ${z.color}`}
-                  >
-                    <div className="text-lg">{z.icon}</div>
-                    <div>{z.label}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-
             <p
               style={{
                 whiteSpace: "pre-line",
@@ -373,25 +356,6 @@ export default function GuideCoach(props: Props) {
                 }}
               >
                 {hint}
-              </div>
-            )}
-
-            {/* Transport pills pour l'étape mobilité */}
-            {stepKey === "mobilite" && (
-              <div className="flex flex-wrap gap-1 mt-3">
-                {[
-                  { icon: "🚆", label: "TER" },
-                  { icon: "🚌", label: "BRT" },
-                  { icon: "🚌", label: "DDD" },
-                  { icon: "🚌", label: "CSS" },
-                ].map((transport) => (
-                  <span
-                    key={transport.label}
-                    className="text-xs bg-white border border-gray-200 text-gray-700 px-2 py-1 rounded-full font-semibold"
-                  >
-                    {transport.icon} {transport.label}
-                  </span>
-                ))}
               </div>
             )}
           </div>

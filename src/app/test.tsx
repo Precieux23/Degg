@@ -1,7 +1,6 @@
 "use client";
 
 import QRModal from "@/components/QRModal";
-import MobiliteJOJ from "@/components/MobiliteJOJ";
 import GuideCoach, { GuideKey, GuideLocale } from "@/components/GuideCoach";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { LANGUAGES, JOJ_PHRASES } from "@/lib/languages";
@@ -14,7 +13,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [activeTab, setActiveTab] = useState<"translate" | "phrases" | "conversation" | "mobilite">("translate");
+  const [activeTab, setActiveTab] = useState<"translate" | "phrases" | "conversation">("translate");
   const [history, setHistory] = useState<{ input: string; output: string; from: string; to: string }[]>([]);
   const [convMessages, setConvMessages] = useState<{ text: string; lang: string; side: "A" | "B" }[]>([]);
   const [convInputA, setConvInputA] = useState("");
@@ -208,12 +207,10 @@ export default function Home() {
   const openGuideForCurrentScreen = () => {
     const step: GuideKey =
       activeTab === "phrases"
-      ? "phrases"
-      : activeTab === "conversation"
-      ? "conversation"
-      : activeTab === "mobilite"          // ← ajoute cette ligne
-      ? "mobilite"                         // ← et celle-ci
-      : "translate_language";
+        ? "phrases"
+        : activeTab === "conversation"
+        ? "conversation"
+        : "translate_language";
 
     setGuideStep(step);
     setIsGuideOpen(true);
@@ -264,26 +261,25 @@ export default function Home() {
 
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
         {/* Tabs */}
-        <div className="grid grid-cols-2 gap-1 bg-white rounded-2xl border border-gray-100 p-1 shadow-sm">
-  {[
-    { key: "translate", label: "🌐 Traduire" },
-    { key: "phrases", label: "⚡ Phrases JOJ" },
-    { key: "conversation", label: "💬 Conversation" },
-    { key: "mobilite", label: "🗺️ Mobilité" },
-  ].map((tab) => (
-    <button
-      key={tab.key}
-      onClick={() => setActiveTab(tab.key as typeof activeTab)}
-      className={`py-2.5 text-xs font-semibold rounded-xl transition-all ${
-        activeTab === tab.key
-          ? "bg-green-600 text-white shadow-sm"
-          : "text-gray-400 hover:text-gray-600"
-      }`}
-    >
-      {tab.label}
-    </button>
-  ))}
-</div>
+        <div className="flex bg-white rounded-2xl border border-gray-100 p-1 shadow-sm">
+          {[
+            { key: "translate", label: "🌐 Traduire" },
+            { key: "phrases", label: "⚡ Phrases JOJ" },
+            { key: "conversation", label: "💬 Conversation" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as typeof activeTab)}
+              className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition-all ${
+                activeTab === tab.key
+                  ? "bg-green-600 text-white shadow-sm"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         {/* TAB: Traduire */}
         {activeTab === "translate" && (
@@ -619,21 +615,6 @@ export default function Home() {
           </div>
         )}
       </div>
-      {/* TAB: Mobilité */}
-{activeTab === "mobilite" && (
-  <MobiliteJOJ
-    toLang={toLang}
-    getLangName={getLangName}
-    getLangFlag={getLangFlag}
-    onTranslate={translate}
-    onPhraseSelect={(phrase) => {
-      setInputText(phrase);
-      setFromLang("FR");
-      setActiveTab("translate");
-      translate(phrase, "FR", toLang);
-    }}
-  />
-)}
 
       <footer className="text-center py-8 text-xs text-gray-300">
         DÉGG · JOJ Dakar 2026 · <span className="text-green-400">Dafa dégg</span> 🇸🇳
