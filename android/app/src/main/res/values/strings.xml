@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DÉGG</string>
+    <string name="title_activity_main">DÉGG</string>
+    <string name="package_name">com.degg.joj2026</string>
+    <string name="custom_url_scheme">com.degg.joj2026</string>
+</resources>

@@ -3,6 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.degg.joj2026",
   appName: "DÉGG",
+  webDir: 'out',
   // For production: point to your deployed URL (Vercel, etc.)
   // The web server handles the DeepL API routes — no static export needed
   server: {
