@@ -8,7 +8,7 @@ interface Props {
   onStart: (lang: string) => void;
 }
 
-const JOJ_DATE = new Date("2026-08-01T00:00:00Z");
+const JOJ_DATE = new Date("2026-10-31T00:00:00Z");
 
 function getDaysRemaining() {
   return Math.max(0, Math.ceil((JOJ_DATE.getTime() - Date.now()) / 86400000));
