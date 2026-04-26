@@ -9,6 +9,14 @@ interface Props {
   defaultLang: string;
   messages: ChatMessage[];
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  // UI strings translated in userLang (from page.tsx)
+  headerTitle?: string;
+  headerSubtitle?: string;
+  quickQuestionsLabel?: string;
+  newConvLabel?: string;
+  tipText?: string;
+  tipTab?: string;
+  inputPlaceholder?: string;
 }
 
 const WELCOME_FR =
@@ -24,12 +32,23 @@ function renderText(text: string) {
   ));
 }
 
-export default function ChatbotAssistant({ defaultLang, messages, setMessages }: Props) {
+export default function ChatbotAssistant({
+  defaultLang,
+  messages,
+  setMessages,
+  headerTitle = "Assistant JOJ Dakar 2026",
+  headerSubtitle = "Transport · Restaurants · SIM · Urgences · Culture",
+  quickQuestionsLabel = "Questions fréquentes",
+  newConvLabel = "Nouvelle conversation",
+  tipText = "Besoin de traduire une phrase précise ? Utilisez l'onglet",
+  tipTab = "Traduction",
+  inputPlaceholder = "Posez votre question...",
+}: Props) {
   const [chatLang, setChatLang] = useState(defaultLang);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [quickLabels, setQuickLabels] = useState(QUICK_QUESTIONS.map((q) => q.label));
   const [showQuick, setShowQuick] = useState(messages.length <= 1);
+  const [quickLabels, setQuickLabels] = useState(QUICK_QUESTIONS.map((q) => q.label));
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
@@ -60,8 +79,7 @@ export default function ChatbotAssistant({ defaultLang, messages, setMessages }:
       setQuickLabels(QUICK_QUESTIONS.map((q) => q.label));
       return;
     }
-    const texts = QUICK_QUESTIONS.map((q) => q.label);
-    translateBatch(texts, "FR", chatLang).then((translated) => {
+    translateBatch(QUICK_QUESTIONS.map((q) => q.label), "FR", chatLang).then((translated) => {
       setQuickLabels(translated.map((t, i) => t || QUICK_QUESTIONS[i].label));
     });
   }, [chatLang]);
@@ -129,17 +147,12 @@ export default function ChatbotAssistant({ defaultLang, messages, setMessages }:
 
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div
-        className="rounded-2xl p-4"
-        style={{ background: "linear-gradient(135deg, #0fa958, #ff7a1a)" }}
-      >
+      {/* Header — solid green, no gradient */}
+      <div className="rounded-2xl p-4" style={{ background: "#0fa958" }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-white font-bold text-sm">Assistant JOJ Dakar 2026</p>
-            <p className="text-white/70 text-xs mt-0.5">
-              Transport · Restaurants · SIM · Visas · Culture
-            </p>
+            <p className="text-white font-bold text-sm">{headerTitle}</p>
+            <p className="text-white/70 text-xs mt-0.5">{headerSubtitle}</p>
           </div>
           <select
             value={chatLang}
@@ -160,7 +173,7 @@ export default function ChatbotAssistant({ defaultLang, messages, setMessages }:
       {showQuick && (
         <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
-            Questions fréquentes
+            {quickQuestionsLabel}
           </p>
           <div className="grid grid-cols-2 gap-2">
             {QUICK_QUESTIONS.map((q, i) => (
@@ -197,14 +210,14 @@ export default function ChatbotAssistant({ defaultLang, messages, setMessages }:
                   ))}
                 </div>
               ) : msg.role === "user" ? (
-                <div className="max-w-[85%] bg-green-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm">
+                <div className="max-w-[85%] text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm" style={{ background: "#0fa958" }}>
                   {msg.text}
                 </div>
               ) : (
                 <div className="max-w-[90%] space-y-2">
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
                     {(msg as { intent?: ChatIntent }).intent && (
-                      <p className="text-xs font-bold text-green-700 mb-1.5">
+                      <p className="text-xs font-bold mb-1.5" style={{ color: "#0fa958" }}>
                         {(msg as { intent: ChatIntent }).intent.title}
                       </p>
                     )}
@@ -221,7 +234,7 @@ export default function ChatbotAssistant({ defaultLang, messages, setMessages }:
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1.5 px-3 py-2 text-white text-xs font-bold rounded-xl transition-all"
-                          style={{ background: "linear-gradient(135deg, #0fa958, #0c8a48)" }}
+                          style={{ background: "#0c8a48" }}
                         >
                           {action.label}
                         </a>
@@ -247,17 +260,18 @@ export default function ChatbotAssistant({ defaultLang, messages, setMessages }:
                 processMessage(input);
               }
             }}
-            placeholder={`Question en ${getLangName(chatLang)}...`}
-            className="flex-1 text-sm text-gray-800 bg-gray-50 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-300"
+            placeholder={`${inputPlaceholder} (${getLangName(chatLang)})`}
+            className="flex-1 text-sm text-gray-800 bg-gray-50 rounded-xl px-3 py-2 outline-none focus:ring-2 placeholder-gray-300"
+            style={{ "--tw-ring-color": "#0fa958" } as React.CSSProperties}
             disabled={isProcessing}
           />
           <button
             onClick={() => processMessage(input)}
             disabled={!input.trim() || isProcessing}
             className="px-4 py-2 text-white text-xs font-bold rounded-xl disabled:opacity-40 transition-all flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #0fa958, #0c8a48)" }}
+            style={{ background: "#0fa958" }}
           >
-            {isProcessing ? "..." : "Envoyer"}
+            {isProcessing ? "..." : "→"}
           </button>
         </div>
       </div>
@@ -271,15 +285,15 @@ export default function ChatbotAssistant({ defaultLang, messages, setMessages }:
           }}
           className="w-full py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 border border-gray-100 transition-all"
         >
-          Nouvelle conversation
+          {newConvLabel}
         </button>
       )}
 
       {/* Tip */}
       <div className="bg-gray-50 rounded-2xl border border-gray-100 p-3 text-center">
         <p className="text-xs text-gray-500">
-          Besoin de traduire une phrase précise ? Utilisez l&apos;onglet{" "}
-          <span className="font-bold text-green-700">Traduction</span>
+          {tipText}{" "}
+          <span className="font-bold" style={{ color: "#0fa958" }}>{tipTab}</span>
         </p>
       </div>
     </div>

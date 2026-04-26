@@ -330,11 +330,7 @@ export default function Home() {
                 ? "text-white shadow-sm"
                 : "text-gray-400 hover:text-gray-600"
             }`}
-            style={
-              activeTab === "chatbot"
-                ? { background: "linear-gradient(135deg, #0fa958, #ff7a1a)" }
-                : {}
-            }
+            style={activeTab === "chatbot" ? { background: "#0fa958" } : {}}
           >
             {uiStrings.tabAssistant}
           </button>
@@ -586,9 +582,10 @@ export default function Home() {
                     <div
                       className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${
                         msg.side === "A"
-                          ? "bg-green-600 text-white rounded-tl-sm"
-                          : "bg-orange-100 text-orange-900 rounded-tr-sm"
+                          ? "text-white rounded-tl-sm"
+                          : "bg-green-50 text-green-900 rounded-tr-sm border border-green-100"
                       }`}
+                      style={msg.side === "A" ? { background: "#0fa958" } : {}}
                     >
                       <p className="text-xs opacity-60 mb-1">
                         {getLangFlag(msg.lang)} {getLangName(msg.lang)}
@@ -608,7 +605,7 @@ export default function Home() {
               <textarea
                 value={convInputA}
                 onChange={(e) => setConvInputA(e.target.value)}
-                placeholder={`Parlez en ${getLangName(fromLang)}...`}
+                placeholder={uiStrings.convSpeakHere}
                 className="w-full h-16 resize-none text-sm text-gray-800 outline-none bg-transparent placeholder-green-300"
               />
               <div className="flex gap-2 mt-2">
@@ -629,28 +626,30 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-orange-50 rounded-2xl border border-orange-100 p-4">
-              <p className="text-xs font-semibold text-orange-700 mb-2">
+            <div className="bg-green-50 rounded-2xl border border-green-100 p-4">
+              <p className="text-xs font-semibold text-green-800 mb-2">
                 {uiStrings.personB} · {getLangFlag(toLang)} {getLangName(toLang)}
               </p>
               <textarea
                 value={convInputB}
                 onChange={(e) => setConvInputB(e.target.value)}
-                placeholder={`Parlez en ${getLangName(toLang)}...`}
-                className="w-full h-16 resize-none text-sm text-gray-800 outline-none bg-transparent placeholder-orange-300"
+                placeholder={uiStrings.convSpeakHere}
+                className="w-full h-16 resize-none text-sm text-gray-800 outline-none bg-transparent placeholder-green-400"
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => startListening(toLang, (text) => setConvInputB(text))}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    isListening ? "bg-red-500 text-white animate-pulse" : "bg-orange-500 text-white hover:bg-orange-600"
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all text-white ${
+                    isListening ? "bg-red-500 animate-pulse" : ""
                   }`}
+                  style={!isListening ? { background: "#0c8a48" } : {}}
                 >
                   {isListening ? uiStrings.listeningMic : uiStrings.micBtn}
                 </button>
                 <button
                   onClick={() => sendConvMessage("B")}
-                  className="flex-1 py-1.5 rounded-xl text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-all"
+                  className="flex-1 py-1.5 rounded-xl text-xs font-semibold text-white transition-all"
+                  style={{ background: "#0c8a48" }}
                 >
                   {uiStrings.sendBtn} → {getLangFlag(fromLang)}
                 </button>
@@ -696,6 +695,13 @@ export default function Home() {
             defaultLang={userLang}
             messages={chatMessages}
             setMessages={setChatMessages}
+            headerTitle={uiStrings.assistantTitle}
+            headerSubtitle={uiStrings.assistantSubtitle}
+            quickQuestionsLabel={uiStrings.quickQuestionsLabel}
+            newConvLabel={uiStrings.newConvBtn}
+            tipText={uiStrings.chatTipText}
+            tipTab={uiStrings.chatTipTab}
+            inputPlaceholder={uiStrings.chatInputPlaceholder}
           />
         </div>
       )}

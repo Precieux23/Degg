@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { translateText } from "@/lib/translate";
+import { useState, useEffect } from "react";
+import { translateText, translateBatch } from "@/lib/translate";
 
 interface Site {
   id: string;
@@ -40,8 +40,7 @@ const ZONES: Zone[] = [
           { type: "DDD", detail: "Dakar Dem Dikk — Ligne 6" },
           { type: "Taxi", detail: "Taxi depuis Plateau ~10 min" },
         ],
-        lat: 14.6937,
-        lon: -17.4441,
+        lat: 14.6937, lon: -17.4441,
       },
       {
         id: "iba-mar-diop",
@@ -52,8 +51,7 @@ const ZONES: Zone[] = [
           { type: "BRT", detail: "Ligne BRT — Arrêt Médina" },
           { type: "Taxi", detail: "Taxi depuis Plateau ~8 min" },
         ],
-        lat: 14.6892,
-        lon: -17.4467,
+        lat: 14.6892, lon: -17.4467,
       },
       {
         id: "corniche-ouest",
@@ -64,8 +62,7 @@ const ZONES: Zone[] = [
           { type: "DDD", detail: "Dakar Dem Dikk — Ligne 8" },
           { type: "Taxi", detail: "Taxi depuis Plateau ~12 min" },
         ],
-        lat: 14.6785,
-        lon: -17.4523,
+        lat: 14.6785, lon: -17.4523,
       },
     ],
   },
@@ -73,9 +70,9 @@ const ZONES: Zone[] = [
     id: "diamniadio",
     name: "Diamniadio",
     distance: "30 km de Dakar",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    color: "text-green-800",
+    bg: "bg-green-50",
+    border: "border-green-300",
     sites: [
       {
         id: "stade-wade",
@@ -86,8 +83,7 @@ const ZONES: Zone[] = [
           { type: "CSS", detail: "Navette officielle CSS depuis hôtels" },
           { type: "DDD", detail: "Dakar Dem Dikk — Express Diamniadio" },
         ],
-        lat: 14.7167,
-        lon: -17.1833,
+        lat: 14.7167, lon: -17.1833,
       },
       {
         id: "dakar-arena",
@@ -98,8 +94,7 @@ const ZONES: Zone[] = [
           { type: "CSS", detail: "Navette officielle CSS depuis hôtels" },
           { type: "DDD", detail: "Dakar Dem Dikk — Express Diamniadio" },
         ],
-        lat: 14.7201,
-        lon: -17.1812,
+        lat: 14.7201, lon: -17.1812,
       },
       {
         id: "centre-expositions",
@@ -109,8 +104,7 @@ const ZONES: Zone[] = [
           { type: "TER", detail: "Train Express Régional — Gare Diamniadio" },
           { type: "CSS", detail: "Navette officielle CSS depuis hôtels" },
         ],
-        lat: 14.7189,
-        lon: -17.1845,
+        lat: 14.7189, lon: -17.1845,
       },
       {
         id: "centre-equestre",
@@ -120,8 +114,7 @@ const ZONES: Zone[] = [
           { type: "TER", detail: "Train Express Régional — Gare Diamniadio" },
           { type: "CSS", detail: "Navette officielle CSS depuis hôtels" },
         ],
-        lat: 14.7145,
-        lon: -17.1867,
+        lat: 14.7145, lon: -17.1867,
       },
     ],
   },
@@ -129,9 +122,9 @@ const ZONES: Zone[] = [
     id: "saly",
     name: "Saly",
     distance: "80 km de Dakar",
-    color: "text-orange-700",
-    bg: "bg-orange-50",
-    border: "border-orange-200",
+    color: "text-green-900",
+    bg: "bg-green-50",
+    border: "border-green-400",
     sites: [
       {
         id: "plage-saly",
@@ -142,12 +135,24 @@ const ZONES: Zone[] = [
           { type: "DDD", detail: "Dakar Dem Dikk — Ligne express Saly" },
           { type: "TER", detail: "TER + navette de correspondance depuis Thiès" },
         ],
-        lat: 14.4667,
-        lon: -16.9833,
+        lat: 14.4667, lon: -16.9833,
       },
     ],
   },
 ];
+
+const TRANSPORT_PHRASES_FR = [
+  "Où est l'arrêt de bus ?",
+  "Ce bus va-t-il à Diamniadio ?",
+  "À quelle heure part la navette ?",
+  "Combien coûte le ticket ?",
+];
+
+interface TranslatedDetail {
+  siteName: string;
+  sports: string[];
+  transport: string[];
+}
 
 interface Props {
   toLang: string;
@@ -160,27 +165,53 @@ interface Props {
   openMapsBtn?: string;
   yangoBtn?: string;
   backLabel?: string;
-}
-
-interface TranslatedDetail {
-  siteName: string;
-  sports: string[];
-  transport: string[];
+  selectZone?: string;
+  sitesLabel?: string;
+  gpsLabel?: string;
 }
 
 export default function MapJOJ({
-  toLang, getLangName, getLangFlag, onPhraseSelect,
+  toLang,
+  getLangName,
+  getLangFlag,
+  onPhraseSelect,
   sportsTitle = "Sports et épreuves",
   transportTitle = "Comment y aller",
   phrasesTitle = "Phrases transport utiles",
   openMapsBtn = "Ouvrir dans Google Maps",
-  yangoBtn = "Commander un taxi Yango",
+  yangoBtn = "Commander un taxi",
   backLabel = "Retour",
+  selectZone = "Sélectionnez une zone pour voir les sites",
+  sitesLabel = "sites",
+  gpsLabel = "Coordonnées GPS",
 }: Props) {
   const [activeZone, setActiveZone] = useState<string>("dakar");
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [detail, setDetail] = useState<TranslatedDetail | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+
+  // Translate zone distance labels
+  const [zoneDistances, setZoneDistances] = useState(ZONES.map((z) => z.distance));
+  // Translate transport quick phrases
+  const [transportPhrases, setTransportPhrases] = useState(TRANSPORT_PHRASES_FR);
+
+  useEffect(() => {
+    if (toLang === "FR") {
+      setZoneDistances(ZONES.map((z) => z.distance));
+      setTransportPhrases(TRANSPORT_PHRASES_FR);
+      return;
+    }
+    const textsToTranslate = [
+      ...ZONES.map((z) => z.distance),
+      ...TRANSPORT_PHRASES_FR,
+    ];
+    translateBatch(textsToTranslate, "FR", toLang).then((translated) => {
+      setZoneDistances(ZONES.map((_, i) => translated[i] || ZONES[i].distance));
+      setTransportPhrases(
+        TRANSPORT_PHRASES_FR.map((p, i) => translated[ZONES.length + i] || p)
+      );
+    });
+  }, [toLang]);
 
   const zone = ZONES.find((z) => z.id === activeZone)!;
 
@@ -189,30 +220,27 @@ export default function MapJOJ({
     setDetail(null);
 
     if (toLang === "FR") {
-      setDetail({
-        siteName: site.name,
-        sports: site.sports,
-        transport: site.transport.map((t) => t.detail),
-      });
+      setDetail({ siteName: site.name, sports: site.sports, transport: site.transport.map((t) => t.detail) });
       return;
     }
 
     setIsTranslating(true);
     try {
-      const [name, sportsRaw, ...transportRaws] = await Promise.all([
-        translateText(site.name, "FR", toLang),
-        translateText(site.sports.join(" | "), "FR", toLang),
-        ...site.transport.map((t) => translateText(t.detail, "FR", toLang)),
-      ]);
+      const textsToTranslate = [
+        site.name,
+        site.sports.join(" | "),
+        ...site.transport.map((t) => t.detail),
+      ];
+      const translated = await translateBatch(textsToTranslate, "FR", toLang);
 
-      const sports = (sportsRaw || site.sports.join(" | "))
+      const sports = (translated[1] || site.sports.join(" | "))
         .split(" | ")
         .map((s, i) => s || site.sports[i] || s);
 
       setDetail({
-        siteName: name || site.name,
+        siteName: translated[0] || site.name,
         sports,
-        transport: transportRaws.map((r, i) => r || site.transport[i].detail),
+        transport: site.transport.map((t, i) => translated[2 + i] || t.detail),
       });
     } finally {
       setIsTranslating(false);
@@ -227,11 +255,8 @@ export default function MapJOJ({
 
   return (
     <div className="max-w-2xl mx-auto px-4 pb-5 space-y-3">
-      {/* Header */}
-      <div
-        className="rounded-2xl p-4"
-        style={{ background: "linear-gradient(135deg, #0fa958, #ff7a1a)" }}
-      >
+      {/* Header — solid green */}
+      <div className="rounded-2xl p-4" style={{ background: "#0fa958" }}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white font-bold text-sm">Carte des sites JOJ</p>
@@ -245,22 +270,21 @@ export default function MapJOJ({
 
       {/* Zone selector */}
       <div className="bg-white rounded-2xl border border-gray-100 p-1 shadow-sm flex gap-1">
-        {ZONES.map((z) => (
+        {ZONES.map((z, zi) => (
           <button
             key={z.id}
-            onClick={() => {
-              setActiveZone(z.id);
-              setSelectedSite(null);
-              setDetail(null);
-            }}
+            onClick={() => { setActiveZone(z.id); setSelectedSite(null); setDetail(null); }}
             className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
               activeZone === z.id
-                ? `${z.bg} ${z.color} border ${z.border}`
-                : "text-gray-400 hover:text-gray-600"
+                ? "text-white"
+                : "text-gray-500 hover:text-gray-700"
             }`}
+            style={activeZone === z.id ? { background: "#0fa958" } : {}}
           >
             {z.name}
-            <span className="block text-[10px] font-normal opacity-70">{z.distance}</span>
+            <span className="block text-[10px] font-normal opacity-70">
+              {zoneDistances[zi]}
+            </span>
           </button>
         ))}
       </div>
@@ -268,6 +292,7 @@ export default function MapJOJ({
       {/* Site list */}
       {!selectedSite && (
         <div className="space-y-2">
+          <p className="text-xs text-gray-400 text-center">{selectZone}</p>
           {zone.sites.map((site) => (
             <button
               key={site.id}
@@ -277,12 +302,7 @@ export default function MapJOJ({
               <p className={`font-bold text-sm ${zone.color} mb-2`}>{site.name}</p>
               <div className="flex flex-wrap gap-1 mb-2">
                 {site.sports.slice(0, 3).map((s) => (
-                  <span
-                    key={s}
-                    className="text-xs bg-white text-gray-600 px-2 py-0.5 rounded-full border border-gray-100"
-                  >
-                    {s}
-                  </span>
+                  <span key={s} className="text-xs bg-white text-gray-600 px-2 py-0.5 rounded-full border border-gray-100">{s}</span>
                 ))}
                 {site.sports.length > 3 && (
                   <span className="text-xs text-gray-400 bg-white px-2 py-0.5 rounded-full border border-gray-100">
@@ -292,12 +312,7 @@ export default function MapJOJ({
               </div>
               <div className="flex gap-1.5">
                 {site.transport.map((t) => (
-                  <span
-                    key={t.type}
-                    className="text-[10px] font-bold bg-white text-gray-700 px-2 py-0.5 rounded-full border border-gray-200"
-                  >
-                    {t.type}
-                  </span>
+                  <span key={t.type} className="text-[10px] font-bold bg-white text-gray-700 px-2 py-0.5 rounded-full border border-gray-200">{t.type}</span>
                 ))}
               </div>
             </button>
@@ -308,10 +323,10 @@ export default function MapJOJ({
       {/* Site detail */}
       {selectedSite && (
         <div className="space-y-3">
-          {/* Back button */}
           <button
             onClick={() => { setSelectedSite(null); setDetail(null); }}
-            className="flex items-center gap-2 text-sm text-green-600 font-semibold hover:underline"
+            className="flex items-center gap-2 text-sm font-semibold hover:underline"
+            style={{ color: "#0fa958" }}
           >
             ← {backLabel} · {zone.name}
           </button>
@@ -322,11 +337,11 @@ export default function MapJOJ({
               {isTranslating ? "..." : (detail?.siteName || selectedSite.name)}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {selectedSite.lat.toFixed(4)}° N, {Math.abs(selectedSite.lon).toFixed(4)}° W
+              {gpsLabel} : {selectedSite.lat.toFixed(4)}° N, {Math.abs(selectedSite.lon).toFixed(4)}° W
             </p>
           </div>
 
-          {/* OpenStreetMap embed */}
+          {/* Map */}
           <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
             <iframe
               title={`Carte ${selectedSite.name}`}
@@ -337,48 +352,34 @@ export default function MapJOJ({
             />
           </div>
 
-          {/* Open maps button */}
+          {/* Open Maps */}
           <a
             href={mapsUrl(selectedSite)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-bold text-sm text-white transition-all"
-            style={{ background: "linear-gradient(135deg, #0fa958, #0c8a48)" }}
+            style={{ background: "#0fa958" }}
           >
             {openMapsBtn}
           </a>
 
           {/* Sports */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
-              {sportsTitle}
-            </p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{sportsTitle}</p>
             <div className="flex flex-wrap gap-2">
               {(detail?.sports || selectedSite.sports).map((s, i) => (
-                <span
-                  key={i}
-                  className={`text-xs px-3 py-1.5 rounded-xl border font-medium ${zone.bg} ${zone.color} ${zone.border}`}
-                >
-                  {s}
-                </span>
+                <span key={i} className={`text-xs px-3 py-1.5 rounded-xl border font-medium ${zone.bg} ${zone.color} ${zone.border}`}>{s}</span>
               ))}
             </div>
           </div>
 
           {/* Transport */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
-              {transportTitle}
-            </p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">{transportTitle}</p>
             <div className="space-y-2">
               {selectedSite.transport.map((t, i) => (
-                <div
-                  key={t.type}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100"
-                >
-                  <span className="text-xs font-black text-gray-700 bg-white px-2 py-1 rounded-lg border border-gray-200 flex-shrink-0">
-                    {t.type}
-                  </span>
+                <div key={t.type} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                  <span className="text-xs font-black text-gray-700 bg-white px-2 py-1 rounded-lg border border-gray-200 flex-shrink-0">{t.type}</span>
                   <p className="text-xs text-gray-600 leading-relaxed">
                     {isTranslating ? t.detail : (detail?.transport[i] || t.detail)}
                   </p>
@@ -387,22 +388,15 @@ export default function MapJOJ({
             </div>
           </div>
 
-          {/* Quick transport phrases */}
+          {/* Transport phrases */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
-              {phrasesTitle}
-            </p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">{phrasesTitle}</p>
             <div className="space-y-2">
-              {[
-                "Où est l'arrêt de bus ?",
-                "Ce bus va-t-il à Diamniadio ?",
-                "À quelle heure part la navette ?",
-                "Combien coûte le ticket ?",
-              ].map((phrase) => (
+              {transportPhrases.map((phrase, i) => (
                 <button
-                  key={phrase}
-                  onClick={() => onPhraseSelect(phrase)}
-                  className="w-full text-left px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-green-50 hover:text-green-700 text-xs text-gray-700 transition-all border border-transparent hover:border-green-200 font-medium"
+                  key={i}
+                  onClick={() => onPhraseSelect(TRANSPORT_PHRASES_FR[i])}
+                  className="w-full text-left px-3 py-2.5 rounded-xl bg-gray-50 text-xs text-gray-700 transition-all border border-transparent font-medium hover:border-green-200 hover:bg-green-50 hover:text-green-700"
                 >
                   {phrase} →
                 </button>
@@ -410,13 +404,13 @@ export default function MapJOJ({
             </div>
           </div>
 
-          {/* Yango button */}
+          {/* Yango */}
           <a
             href="https://yango.com/fr_sn/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center w-full py-3 rounded-2xl font-bold text-sm text-white transition-all"
-            style={{ background: "linear-gradient(135deg, #ff7a1a, #e86910)" }}
+            style={{ background: "#0c8a48" }}
           >
             {yangoBtn}
           </a>

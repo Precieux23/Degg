@@ -105,21 +105,17 @@ export default function LandingScreen({ onStart }: Props) {
       {/* ── HERO (dark) — tout tient dans un viewport mobile ───── */}
       <div
         className="relative flex flex-col items-center px-5 py-8"
-        style={{
-          background:
-            "linear-gradient(170deg, #071a10 0%, #0a2a16 40%, #0f3d22 70%, #143d28 100%)",
-          minHeight: "100svh",
-        }}
+        style={{ background: "#0a2a16", minHeight: "100svh" }}
       >
         {/* Decorative blobs */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <div
-            className="absolute -top-12 right-0 w-64 h-64 rounded-full opacity-15"
-            style={{ background: "radial-gradient(circle, #ffd34d 0%, transparent 70%)" }}
+            className="absolute -top-12 right-0 w-64 h-64 rounded-full opacity-5"
+            style={{ background: "radial-gradient(circle, #0fa958 0%, transparent 70%)" }}
           />
           <div
-            className="absolute bottom-1/3 -left-16 w-56 h-56 rounded-full opacity-10"
-            style={{ background: "radial-gradient(circle, #ff7a1a 0%, transparent 70%)" }}
+            className="absolute bottom-1/3 -left-16 w-56 h-56 rounded-full opacity-5"
+            style={{ background: "radial-gradient(circle, #0c8a48 0%, transparent 70%)" }}
           />
           {/* Track arcs */}
           {[100, 140, 180].map((r) => (
@@ -147,7 +143,7 @@ export default function LandingScreen({ onStart }: Props) {
               width: 22,
               height: 36,
               background:
-                "radial-gradient(ellipse at 50% 90%, #ffd34d 0%, #ff7a1a 45%, #dc2626 80%, transparent 100%)",
+                "radial-gradient(ellipse at 50% 90%, #6ee7a7 0%, #0fa958 45%, #0c8a48 80%, transparent 100%)",
               borderRadius: "50% 50% 30% 30% / 60% 60% 40% 40%",
               animation: "joj-flame 1.4s ease-in-out infinite alternate",
               filter: "blur(0.5px)",
@@ -157,7 +153,7 @@ export default function LandingScreen({ onStart }: Props) {
             style={{
               width: 7,
               height: 18,
-              background: "linear-gradient(to bottom, #b8973a, #7a5e1a)",
+              background: "#0c8a48",
               borderRadius: "2px 2px 3px 3px",
               marginTop: -3,
             }}
@@ -167,7 +163,7 @@ export default function LandingScreen({ onStart }: Props) {
         {/* App logo */}
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-2xl flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #0fa958, #ff7a1a)" }}
+          style={{ background: "#0fa958" }}
         >
           <span className="text-white font-black text-2xl tracking-tighter">D</span>
         </div>
@@ -239,8 +235,8 @@ export default function LandingScreen({ onStart }: Props) {
         <button
           onClick={() => onStart(lang)}
           disabled={isTranslating}
-          className="w-full max-w-sm py-4 rounded-2xl font-black text-lg text-white shadow-2xl transition-transform active:scale-95 disabled:opacity-60 flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #0fa958, #ff7a1a)" }}
+          className="w-full max-w-sm py-4 rounded-2xl font-black text-lg text-white shadow-lg transition-transform active:scale-95 disabled:opacity-60 flex-shrink-0"
+          style={{ background: "#0fa958" }}
         >
           {content.cta} {selectedFlag}
         </button>

@@ -226,10 +226,8 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background: radial-gradient(520px 160px at 10% 0%, rgba(255, 211, 77, 0.45), transparent 58%),
-    radial-gradient(520px 160px at 90% 0%, rgba(255, 122, 26, 0.30), transparent 60%),
-    linear-gradient(135deg, rgba(15, 169, 88, 0.10), rgba(255, 122, 26, 0.08));
-  border-bottom: 1px solid rgba(11, 18, 32, 0.08);
+  background: rgba(15, 169, 88, 0.06);
+  border-bottom: 1px solid rgba(15, 169, 88, 0.15);
 }
 
 .joj-coach-body {
@@ -302,8 +300,8 @@ button {
 .joj-btn-primary {
   border: none;
   color: white;
-  background: linear-gradient(135deg, var(--joj-green), var(--joj-orange));
-  box-shadow: 0 16px 35px rgba(15, 169, 88, 0.22), 0 14px 32px rgba(255, 122, 26, 0.16);
+  background: var(--joj-green);
+  box-shadow: 0 16px 35px rgba(15, 169, 88, 0.28);
 }
 
 /* =========================
@@ -315,18 +313,19 @@ button {
   bottom: 16px;
   z-index: 60;
   border-radius: 999px;
-  padding: 12px 14px;
+  padding: 12px 18px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 
   color: white;
-  font-weight: 950;
+  font-weight: 700;
+  font-size: 13px;
   letter-spacing: 0.2px;
 
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: linear-gradient(135deg, var(--joj-green), var(--joj-orange));
-  box-shadow: 0 18px 40px rgba(15, 169, 88, 0.22), 0 14px 32px rgba(255, 122, 26, 0.18);
+  border: none;
+  background: var(--joj-green);
+  box-shadow: 0 4px 16px rgba(15, 169, 88, 0.35);
 }
 
 .joj-fab:hover {
